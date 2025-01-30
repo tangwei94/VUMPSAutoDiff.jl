@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = AD4vumps
+CurrentModule = VUMPSAutoDiff
 ```
 
-# AD4vumps
+# VUMPSAutoDiff
 
-Documentation for [AD4vumps](https://github.com/tangwei94/AD4vumps.jl).
+Documentation for [VUMPSAutoDiff](https://github.com/tangwei94/VUMPSAutoDiff.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [AD4vumps]
+Modules = [VUMPSAutoDiff]
 ```

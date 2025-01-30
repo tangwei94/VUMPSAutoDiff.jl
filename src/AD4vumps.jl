@@ -1,4 +1,4 @@
-module AD4vumps
+module VUMPSAutoDiff
 
 __precompile__(true)
 

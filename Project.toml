@@ -1,4 +1,4 @@
-name = "AD4vumps"
+name = "VUMPSAutoDiff"
 uuid = "87d80e04-03a5-42db-b395-4c81662c4174"
 authors = ["Wei Tang <tangwei@smail.nju.edu.cn> and contributors"]
 version = "0.1.0"
