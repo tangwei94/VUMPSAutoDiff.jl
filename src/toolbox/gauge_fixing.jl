@@ -1,21 +1,26 @@
 """
     gauge_fixing(AL1, AL2)
 
-Compute the gauge fixing unitary between two left-canonical MPS tensors using their transfer matrix.
-Returns a unitary tensor U that minimizes ‖AL1 - U' * AL2 * U‖ through QR decomposition of the
-transfer matrix's left environment.
+Compute the optimal gauge transformation between two left-canonical MPS tensors by diagonalizing
+their transfer matrix. Returns the unitary transformation and convergence metric.
 
 # Arguments
-- `AL1`, `AL2`: Left-canonical MPS tensors to be gauge-fixed
+- `AL1`: Reference left-canonical MPS tensor
+- `AL2`: Target MPS tensor to be gauge-fixed (will be transformed to match AL1's gauge)
 
 # Returns
-- `U`: Unitary transformation matrix that aligns AL1 and AL2
+- `U::AbstractTensorMap`: Unitary transformation matrix satisfying ``AL1 ≈ U' * AL2 * U``
+- `conv_meas::Real`: if AL1 and AL2 are equivalent up to a unitary transformation, this should be 0. This is a measure of the deviation between the MPS's represented by AL1 and AL2
 """
 function gauge_fixing(AL1::AbstractTensorMap, AL2::AbstractTensorMap)
     TM = MPSMPSTransferMatrix(AL1, AL2)
     σ = left_env(TM)
-    U, _ = leftorth(σ; alg=QRpos())
-    return U
+    U, R = leftorth(σ; alg=QRpos())
+
+    rmul!(R, dim(space(R, 1)/tr(R)))  # Normalize R matrix
+    conv_meas = norm(R - id(space(R, 1)))  # Measures deviation from identity
+
+    return U, conv_meas
 end
 @non_differentiable gauge_fixing(args...)
 
@@ -72,13 +77,29 @@ end
 #end
 @non_differentiable overall_u1_phase(::AbstractTensorMap, ::AbstractTensorMap)
 
-#function diagonalize_C(AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSTensor)
-#    U, C1, V = tsvd(C)
-#    @tensor AL1[-1 -2; -3] := AL[1 -2; 2] * U'[-1; 1] * V'[2; -3]
-#    @tensor AR1[-1 -2; -3] := AR[1 -2; 2] * U'[-1; 1] * V'[2; -3]
-#    @tensor AC1[-1 -2; -3] := AC[1 -2; 2] * U'[-1; 1] * V'[2; -3]
-#    return AL1, AR1, AC1, C1
-#end
+"""
+    gauge_fix!(AL2, AL1)
+
+In-place gauge fixing of left-canonical MPS tensor AL2 to match AL1's gauge. Performs:
+1. Unitary gauge transformation using `gauge_fixing`
+2. Global U(1) phase correction using `overall_u1_phase`
+
+# Arguments
+- `AL2`: left-canonical MPS tensor to be modified in-place (will be gauge fixed to match AL1's gauge)
+- `AL1`: Reference left-canonical MPS tensor in the desired gauge
+
+# Returns
+- `conv_meas::Real`: Convergence metric from gauge fixing, measures residual difference between 
+  the gauge-transformed AL2 and AL1 (should be ≈ 0 for equivalent MPS)
+"""
+function gauge_fix!(AL2::MPSTensor, AL1::MPSTensor)
+    U, conv_meas = gauge_fixing(AL1, AL2)
+    @tensor AL2[-1 -2; -3] := AL2[1 -2; 2] * U[-1; 1] * U'[2; -3] 
+    λ = overall_u1_phase(AL1, AL2)
+    rmul!(AL2, λ)
+    return conv_meas 
+end
+@non_differentiable gauge_fix!(AL2::MPSTensor, AL1::MPSTensor)
 
 """
     gauge_fixed_vumps_iteration(AL, AR, T)

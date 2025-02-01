@@ -1,0 +1,102 @@
+"""
+    VOMPSOptions
+
+Configuration struct for VOMPS algorithm.
+
+# Fields
+- `tol::Float64`: Convergence tolerance for VOMPS updates
+- `maxiter::Int`: Maximum number of iterations
+- `verbosity::Int`: Output verbosity level (0 = silent, 1 = basic, 2 = detailed)
+- `do_gauge_fixing::Bool`: Enable/disable gauge fixing after convergence
+"""
+struct VOMPSOptions
+    tol::Float64
+    maxiter::Int
+    verbosity::Int
+    do_gauge_fixing::Bool
+end
+
+"""
+    VOMPSOptions(;tol=1e-12, maxiter=100, verbosity=1, do_gauge_fixing=true)
+
+Construct VOMPSOptions with default values. Keyword arguments match field names.
+"""
+function VOMPSOptions(;tol=1e-12, maxiter=100, verbosity=1, do_gauge_fixing=true)
+    VOMPSOptions(tol, maxiter, verbosity, do_gauge_fixing)
+end
+
+"""
+    vomps_update!(AC1, C1, AL1, AR1, T, AL, AR)
+
+Perform in-place VOMPS iteration step updating AC and C tensors using environment tensors.
+
+# Arguments
+- `AC1::MPSTensor`: Target AC tensor to update (modified in-place)
+- `C1::MPSBondTensor`: Target C tensor to update (modified in-place)
+- `AL1/AR1::MPSTensor`: Current left/right MPS tensors
+- `T::MPOTensor`: MPO tensor for the Hamiltonian
+- `AL/AR::MPSTensor`: Previous left/right MPS tensors
+
+# Returns
+- Tuple of updated (AC1, C1) tensors
+"""
+function vomps_update!(AC1::MPSTensor, C1::MPSBondTensor, AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor)
+
+    TM_L = MPSMPOMPSTransferMatrix(AL1, T, AL)
+    TM_R = MPSMPOMPSTransferMatrix(AR1, T, AR)
+
+    EL = left_env(TM_L)
+    ER = right_env(TM_R)
+
+    # update AC and C
+    @tensor AC1[-1 -2; -3] = EL[-1 2; 1] * AC[1 3; 4] * T[-2 2; 3 5] * ER[4 5; -3]
+    @tensor C1[-1; -2] = EL[-1 3; 1] * C[1; 2] * ER[2 3; -2]
+
+    return AC1, C1
+end
+@non_differentiable vomps_update!(AC1::MPSTensor, C1::MPSBondTensor, AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor)
+
+"""
+    vomps!(AL1, AR1, T, AL, AR, opts)
+
+MPO-MPS product compression using VOMPS algorithm.
+The MPO is represented by the MPO tensor T, and the MPS is represented by the left and right MPS tensors AL and AR.
+The output is saved in AL1 and AR1.
+
+# Arguments
+- `AL1/AR1::MPSTensor`: Target left/right MPS tensors to update (modified in-place)
+- `T::MPOTensor`: MPO local tensor  
+- `AL/AR::MPSTensor`: MPS tensors
+- `opts::VOMPSOptions`: Algorithm configuration parameters
+
+# Returns
+- `AL1/AR1::MPSTensor`: Updated left/right MPS tensors (modified in-place)
+- `AC1::MPSTensor`: Updated center AC tensor
+- `C1::MPSBondTensor`: Updated center bond tensor
+- `power_method_conv::Real`: Convergence metric from final gauge fixing (NaN if disabled). Measures the difference between the MPSs represented by AL1 and AL (should be = 0 for equivalent MPS)
+"""
+function vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor, opts::VOMPSOptions)
+    # initialize AC1 and C1
+    AC1 = similar(AL1, space(AL1))
+    C1 = similar(AL1, space(AL1, 1), space(AL1, 1))
+
+    # VOMPS iterations
+    # TODO. print info if opts.verbosity > 1
+    for _ in 1:opts.maxiter
+        vomps_update!(AC1, C1, AL1, AR1, T, AL, AR)
+        conv_meas = mps_update!(AL, AR, AC1, C1)
+        if conv_meas < opts.tol
+            break
+        end
+    end
+
+    if opts.do_gauge_fixing
+        power_method_conv = gauge_fix!(AL1, AL)
+    else
+        power_method_conv = NaN
+    end
+
+    return AL1, AR1, AC1, C1, power_method_conv
+end
+@non_differentiable vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor, opts::VOMPSOptions)
+

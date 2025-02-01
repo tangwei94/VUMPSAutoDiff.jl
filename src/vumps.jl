@@ -1,5 +1,23 @@
-function mps_update(AC::MPSTensor, C::MPSBondTensor)
+function mps_update!(AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor)
+    # Left orthogonalization
+    UAC_l, PAC_l = leftorth(AC; alg = QRpos())
+    UC_l, PC_l = leftorth(C; alg = QRpos())
 
+    # Right orthogonalization 
+    PAC_r, UAC_r = rightorth(permute(AC, ((1,), (2, 3))); alg = LQpos())
+    PC_r, UC_r = rightorth(C; alg=LQpos())
+
+    # Update AL and AR in-place
+    mul!(AL, UAC_l, UC_l')  # Reuse AL's memory
+    permute!(AR, UC_r' * UAC_r, ((1, 2), (3,)))  # Reuse AR's memory
+
+    # Return convergence measure
+    conv_meas = max(norm(PAC_l - PC_l), norm(PAC_r - PC_r))
+    return conv_meas
+end
+@non_differentiable mps_update!(AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor)
+
+function mps_update(AC::MPSTensor, C::MPSBondTensor)
     UAC_l, PAC_l = leftorth(AC; alg = QRpos())
     UC_l, PC_l = leftorth(C; alg = QRpos())
 
