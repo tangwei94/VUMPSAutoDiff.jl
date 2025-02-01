@@ -30,6 +30,6 @@ include("gauge_fixing.jl");
 include("vumps.jl");
 
 # DIIS tools for speeding up iterative solvers
-include("DIISTools/diis.jl")
+include("toolbox/diis.jl")
 
 end

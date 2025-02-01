@@ -1,4 +1,4 @@
-function gauge_fixing(AL1, AL2)
+function gauge_fixing(AL1::AbstractTensorMap, AL2::AbstractTensorMap)
     TM = MPSMPSTransferMatrix(AL1, AL2)
     σ = left_env(TM)
     U, _ = leftorth(σ; alg=QRpos())
@@ -7,15 +7,19 @@ end
 @non_differentiable gauge_fixing(args...)
 
 function overall_u1_phase(T1::AbstractTensorMap, T2::AbstractTensorMap)
-    for (f1, f2) in fusiontrees(T2)
-        for ix in 1:length(T2[f1, f2])
-            if norm(T2[f1, f2][ix]) > 1e-2
-                return T1[f1, f2][ix] / T2[f1, f2][ix]
-                @show norm(T1[f1, f2][ix] / T2[f1, f2][ix]) 
-            end
-        end
-    end
+    T1T2trace = tr(T1' * T2)
+    return (norm(T1)/norm(T2)) * T1T2trace / abs(T1T2trace)
 end
+#function overall_u1_phase(T1::AbstractTensorMap, T2::AbstractTensorMap)
+#    for (f1, f2) in fusiontrees(T2)
+#        for ix in 1:length(T2[f1, f2])
+#            if norm(T2[f1, f2][ix]) > 1e-2
+#                return T1[f1, f2][ix] / T2[f1, f2][ix]
+#                @show norm(T1[f1, f2][ix] / T2[f1, f2][ix]) 
+#            end
+#        end
+#    end
+#end
 #function ChainRulesCore.rrule(::typeof(overall_u1_phase), T1::AbstractTensorMap, T2::AbstractTensorMap)
 #    info = []
 #    for (f1, f2) in fusiontrees(T2)
