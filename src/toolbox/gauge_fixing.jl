@@ -92,14 +92,19 @@ In-place gauge fixing of left-canonical MPS tensor AL2 to match AL1's gauge. Per
 - `conv_meas::Real`: Convergence metric from gauge fixing, measures residual difference between 
   the gauge-transformed AL2 and AL1 (should be ≈ 0 for equivalent MPS)
 """
-function gauge_fix!(AL2::MPSTensor, AL1::MPSTensor)
+function gauge_fix!(AL2::MPSTensor, AR2::MPSTensor, AC2::MPSTensor, C2::MPSBondTensor, AL1::MPSTensor)
     U, conv_meas = gauge_fixing(AL1, AL2)
-    @tensor AL2[-1 -2; -3] := AL2[1 -2; 2] * U[-1; 1] * U'[2; -3] 
+    @tensor AL2[-1 -2; -3] = AL2[1 -2; 2] * U[-1; 1] * U'[2; -3] 
+    @tensor AR2[-1 -2; -3] = AR2[1 -2; 2] * U[-1; 1] * U'[2; -3] 
+    @tensor AC2[-1 -2; -3] = AC2[1 -2; 2] * U[-1; 1] * U'[2; -3] 
+    @tensor C2[-1; -2] = C2[1 ;2] * U[-1; 1] * U'[2; -2] 
     λ = overall_u1_phase(AL1, AL2)
     rmul!(AL2, λ)
+    rmul!(AR2, λ)
+    rmul!(AC2, λ)
     return conv_meas 
 end
-@non_differentiable gauge_fix!(AL2::MPSTensor, AL1::MPSTensor)
+@non_differentiable gauge_fix!(AL2::MPSTensor, AR2::MPSTensor, AC2::MPSTensor, C2::MPSBondTensor, AL1::MPSTensor)
 
 """
     gauge_fixed_vumps_iteration(AL, AR, T)

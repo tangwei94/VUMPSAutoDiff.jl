@@ -34,8 +34,10 @@ include("vumps.jl");
 
 # DIIS tools for speeding up iterative solvers
 include("toolbox/diis.jl")
+# gauge fixing
 include("toolbox/gauge_fixing.jl"); 
 
-include("vomps.jl");
+# VOMPS
+include("vomps/vomps.jl");
 
 end

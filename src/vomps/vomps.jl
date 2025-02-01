@@ -36,25 +36,31 @@ Perform in-place VOMPS iteration step updating AC and C tensors using environmen
 - `AL1/AR1::MPSTensor`: Current left/right MPS tensors
 - `T::MPOTensor`: MPO tensor for the Hamiltonian
 - `AL/AR::MPSTensor`: Previous left/right MPS tensors
-
+- `AC/C::MPSTensor`: Previous AC and C tensors
 # Returns
 - Tuple of updated (AC1, C1) tensors
 """
-function vomps_update!(AC1::MPSTensor, C1::MPSBondTensor, AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor)
+function vomps_update!(AC1::MPSTensor, C1::MPSBondTensor, AL1::MPSTensor, AR1::MPSTensor, EL::EnvTensorL, ER::EnvTensorR, T::MPOTensor, AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor)
 
     TM_L = MPSMPOMPSTransferMatrix(AL1, T, AL)
     TM_R = MPSMPOMPSTransferMatrix(AR1, T, AR)
 
-    EL = left_env(TM_L)
-    ER = right_env(TM_R)
+    _ = left_env!(EL, TM_L)
+    λ = right_env!(ER, TM_R)
 
     # update AC and C
-    @tensor AC1[-1 -2; -3] = EL[-1 2; 1] * AC[1 3; 4] * T[-2 2; 3 5] * ER[4 5; -3]
-    @tensor C1[-1; -2] = EL[-1 3; 1] * C[1; 2] * ER[2 3; -2]
+    @tensor AC1[-1 -2; -3] = (1/λ) * EL[-1; 1 2] * AC[1 3; 4] * T[2 -2; 3 5] * ER[4 5; -3]
+    @tensor C1[-1; -2] = EL[-1; 1 3] * C[1; 2] * ER[2 3; -2]
 
     return AC1, C1
 end
-@non_differentiable vomps_update!(AC1::MPSTensor, C1::MPSBondTensor, AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor)
+@non_differentiable vomps_update!(
+    AC1::MPSTensor, C1::MPSBondTensor, 
+    AL1::MPSTensor, AR1::MPSTensor,
+    EL::EnvTensorL, ER::EnvTensorR, 
+    T::MPOTensor, AL::MPSTensor, AR::MPSTensor, 
+    AC::MPSTensor, C::MPSBondTensor
+)
 
 """
     vomps!(AL1, AR1, T, AL, AR, opts)
@@ -75,28 +81,34 @@ The output is saved in AL1 and AR1.
 - `C1::MPSBondTensor`: Updated center bond tensor
 - `power_method_conv::Real`: Convergence metric from final gauge fixing (NaN if disabled). Measures the difference between the MPSs represented by AL1 and AL (should be = 0 for equivalent MPS)
 """
-function vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor, opts::VOMPSOptions)
+function vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor, opts::VOMPSOptions)
     # initialize AC1 and C1
     AC1 = similar(AL1, space(AL1))
     C1 = similar(AL1, space(AL1, 1), space(AL1, 1))
 
     # VOMPS iterations
-    # TODO. print info if opts.verbosity > 1
-    for _ in 1:opts.maxiter
-        vomps_update!(AC1, C1, AL1, AR1, T, AL, AR)
-        conv_meas = mps_update!(AL, AR, AC1, C1)
+    EL = left_env(MPSMPOMPSTransferMatrix(AL1, T, AL))
+    ER = right_env(MPSMPOMPSTransferMatrix(AR1, T, AR))
+    conv_meas = Inf
+    for ix in 1:opts.maxiter
+        vomps_update!(AC1, C1, AL1, AR1, EL, ER, T, AL, AR, AC, C)
+        conv_meas = mps_update!(AL1, AR1, AC1, C1)
         if conv_meas < opts.tol
             break
         end
+        if opts.verbosity > 1
+            printstyled("VOMPS iteration $ix: conv_meas = $conv_meas\n", color=:green)
+        end
     end
+    (opts.verbosity == 1) && printstyled("VOMPS final convergence measure: $conv_meas\n", color=:green)
 
     if opts.do_gauge_fixing
-        power_method_conv = gauge_fix!(AL1, AL)
+        power_method_conv = gauge_fix!(AL1, AR1, AC1, C1, AL)
     else
         power_method_conv = NaN
     end
 
     return AL1, AR1, AC1, C1, power_method_conv
 end
-@non_differentiable vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor, opts::VOMPSOptions)
+@non_differentiable vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor, opts::VOMPSOptions)
 

@@ -25,7 +25,7 @@ function right_canonical_QR(A::MPSTensor; tol::Float64=1e-15, maxiter=200, enabl
     
     enable_warning && δ > tol && @warn "right_canonical_QR failed to converge. δ: $δ , tol: $tol"
 
-    return AR, L0'
+    return AR, L0 # originally here we return L0'. don't remember why.
 end
 
 function left_canonical_QR(A::TensorMap{T, ComplexSpace, 2, 1}; tol::Float64=1e-15, maxiter=200, enable_warning=false) where T

@@ -64,6 +64,12 @@ function right_env(TM::AbstractLinearMap)
     return ρrs[1]
 end
 
+function right_env!(ρr::AbstractTensorMap, TM::AbstractLinearMap)
+    λs, ρrs, _ = eigsolve(v -> right_transfer(TM, v), ρr, 1, :LM)
+    copy!(ρr, ρrs[1])
+    return λs[1]
+end
+
 """
     left_env(TM::AbstractLinearMap) -> AbstractTensorMap
 
@@ -80,6 +86,11 @@ function left_env(TM::AbstractLinearMap)
     init = rand(ComplexF64, left_space(TM))
     _, ρls, _ = eigsolve(v -> left_transfer(TM, v), init, 1, :LM)
     return ρls[1]
+end
+function left_env!(ρl::AbstractTensorMap, TM::AbstractLinearMap)
+    λs, ρls, _ = eigsolve(v -> left_transfer(TM, v), ρl, 1, :LM)
+    copy!(ρl, ρls[1])
+    return λs[1]
 end
 
 """
