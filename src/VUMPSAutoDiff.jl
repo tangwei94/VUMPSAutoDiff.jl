@@ -17,14 +17,16 @@ export right_env, left_env
 export gauge_fixing, overall_u1_phase
 export mps_update, vumps_update, vumps
 
-# DIIS tools for speeding up iterative solvers
 export DIIS_extrapolation_alg, power_method_alg, iterative_solver
 
 include("utils.jl");
-include("transfer_matrix.jl");
-include("MPSMPSTransferMatrix.jl");
-include("MPSMPOMPSTransferMatrix.jl");
-include("ACMap.jl");
+
+# Linear maps
+include("linearmaps/transfer_matrix.jl");
+include("linearmaps/MPSMPSTransferMatrix.jl");
+include("linearmaps/MPSMPOMPSTransferMatrix.jl");
+include("linearmaps/ACMap.jl");
+
 include("canonicalization.jl");
 include("vumps.jl");
 
