@@ -1,3 +1,16 @@
+"""
+    gauge_fixing(AL1, AL2)
+
+Compute the gauge fixing unitary between two left-canonical MPS tensors using their transfer matrix.
+Returns a unitary tensor U that minimizes ‖AL1 - U' * AL2 * U‖ through QR decomposition of the
+transfer matrix's left environment.
+
+# Arguments
+- `AL1`, `AL2`: Left-canonical MPS tensors to be gauge-fixed
+
+# Returns
+- `U`: Unitary transformation matrix that aligns AL1 and AL2
+"""
 function gauge_fixing(AL1::AbstractTensorMap, AL2::AbstractTensorMap)
     TM = MPSMPSTransferMatrix(AL1, AL2)
     σ = left_env(TM)
@@ -6,8 +19,20 @@ function gauge_fixing(AL1::AbstractTensorMap, AL2::AbstractTensorMap)
 end
 @non_differentiable gauge_fixing(args...)
 
+"""
+    overall_u1_phase(T1, T2)
+
+Compute the global U(1) phase difference between two tensors. Returns a complex phase factor
+λ such that T1 ≈ λ*T2 up to numerical precision. Uses the trace of T1'*T2 to determine the phase.
+
+# Arguments
+- `T1`, `T2`: Input tensors to compare
+
+# Returns
+- Complex phase factor λ with |λ| = 1
+"""
 function overall_u1_phase(T1::AbstractTensorMap, T2::AbstractTensorMap)
-    T1T2trace = tr(T1' * T2)
+    T1T2trace = tr(T2' * T1)
     return (norm(T1)/norm(T2)) * T1T2trace / abs(T1T2trace)
 end
 #function overall_u1_phase(T1::AbstractTensorMap, T2::AbstractTensorMap)
@@ -55,6 +80,22 @@ end
 #    return AL1, AR1, AC1, C1
 #end
 
+"""
+    gauge_fixed_vumps_iteration(AL, AR, T)
+
+Perform a single gauge-fixed VUMPS iteration. Returns updated (AL, AR) tensors after:
+1. VUMPS update to get (AC, C)
+2. MPS update to get new (AL, AR)
+3. Gauge fixing with unitary transformation
+4. Global phase correction
+
+# Arguments
+- `AL`, `AR`: Current left/right MPS tensors
+- `T`: MPO tensor for the Hamiltonian
+
+# Returns
+- Tuple of (AL1_gauged, AR1_gauged) updated tensors
+"""
 function gauge_fixed_vumps_iteration(AL::MPSTensor, AR::MPSTensor, T::MPOTensor)
     AC1, C1 = vumps_update(AL, AR, T)
     AL1, AR1, _ = mps_update(AC1, C1)
@@ -70,6 +111,19 @@ function gauge_fixed_vumps_iteration(AL::MPSTensor, AR::MPSTensor, T::MPOTensor)
     return AL1_gauged, AR1_gauged 
 end
 
+"""
+    ordinary_vumps_iteration(AL, AR, T)
+
+Perform a standard VUMPS iteration without gauge fixing. Returns updated (AL, AR) tensors
+through basic VUMPS update steps.
+
+# Arguments
+- `AL`, `AR`: Current left/right MPS tensors  
+- `T`: MPO tensor for the Hamiltonian
+
+# Returns 
+- Tuple of (AL1, AR1) updated tensors
+"""
 function ordinary_vumps_iteration(AL::MPSTensor, AR::MPSTensor, T::MPOTensor)
     AC1, C1 = vumps_update(AL, AR, T)
     AL1, AR1, _ = mps_update(AC1, C1)

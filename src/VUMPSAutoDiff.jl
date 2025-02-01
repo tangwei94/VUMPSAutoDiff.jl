@@ -26,10 +26,10 @@ include("MPSMPSTransferMatrix.jl");
 include("MPSMPOMPSTransferMatrix.jl");
 include("ACMap.jl");
 include("canonicalization.jl");
-include("gauge_fixing.jl"); 
 include("vumps.jl");
 
 # DIIS tools for speeding up iterative solvers
 include("toolbox/diis.jl")
+include("toolbox/gauge_fixing.jl"); 
 
 end
