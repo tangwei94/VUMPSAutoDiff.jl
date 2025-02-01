@@ -15,7 +15,9 @@ export MPSMPSTransferMatrix, MPSMPOMPSTransferMatrix
 export ACMap, fixed_point
 export right_env, left_env
 export gauge_fixing, overall_u1_phase
-export mps_update, vumps_update, vumps
+export mps_update!, mps_update, vumps_update, vumps
+
+export vomps!, VOMPSOptions
 
 export DIIS_extrapolation_alg, power_method_alg, iterative_solver
 
@@ -33,5 +35,7 @@ include("vumps.jl");
 # DIIS tools for speeding up iterative solvers
 include("toolbox/diis.jl")
 include("toolbox/gauge_fixing.jl"); 
+
+include("vomps.jl");
 
 end

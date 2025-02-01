@@ -11,4 +11,11 @@ Documentation for [VUMPSAutoDiff](https://github.com/tangwei94/VUMPSAutoDiff.jl)
 
 ```@autodocs
 Modules = [VUMPSAutoDiff]
+Order = [:type, :function]
+Pages = [
+    "vomps.jl",
+    "toolbox/gauge_fixing.jl",
+    "vumps.jl",
+    #... other files
+]
 ```
