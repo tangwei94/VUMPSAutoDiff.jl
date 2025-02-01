@@ -17,7 +17,7 @@ function gauge_fixing(AL1::AbstractTensorMap, AL2::AbstractTensorMap)
     σ = left_env(TM)
     U, R = leftorth(σ; alg=QRpos())
 
-    rmul!(R, dim(space(R, 1)/tr(R)))  # Normalize R matrix
+    rmul!(R, dim(space(R, 1))/tr(R))  # Normalize R matrix
     conv_meas = norm(R - id(space(R, 1)))  # Measures deviation from identity
 
     return U, conv_meas
