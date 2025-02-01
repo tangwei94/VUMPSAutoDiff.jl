@@ -1,3 +1,15 @@
+"""
+    DIIS_extrapolation_alg
+
+A struct representing the Direct Inversion in the Iterative Subspace (DIIS) extrapolation algorithm parameters.
+
+# Fields
+- `M::Int`: Maximum number of iterations
+- `ΔM::Int`: Number of additional iterations after each DIIS step
+- `tol::Float64`: Convergence tolerance
+- `max_diis_step::Int`: Maximum number of DIIS steps
+- `damping_factor::Float64`: Factor used to stabilize the DIIS procedure
+"""
 struct DIIS_extrapolation_alg
     M::Int
     ΔM::Int
@@ -6,14 +18,34 @@ struct DIIS_extrapolation_alg
     damping_factor::Float64 
 end
 
+"""
+    DIIS_extrapolation_alg(; M::Int = 10, ΔM::Int = 3, tol::Float64 = 1e-8, max_diis_step::Int = 60, damping_factor::Float64=1e-8)
+
+Constructor for DIIS_extrapolation_alg with default parameters.
+"""
 function DIIS_extrapolation_alg(; M::Int = 10, ΔM::Int = 3, tol::Float64 = 1e-8, max_diis_step::Int = 60, damping_factor::Float64=1e-8) 
     return DIIS_extrapolation_alg(M, ΔM, tol, max_diis_step, damping_factor)
 end
 
+"""
+    power_method_alg(; M::Int = 100, tol::Float64 = 1e-8)
+
+Creates a DIIS configuration suitable for power method iteration without extrapolation.
+"""
 function power_method_alg(; M::Int = 100, tol::Float64 = 1e-8) 
     return DIIS_extrapolation_alg(M = M, ΔM = 0, tol=tol, max_diis_step = 0, damping_factor=0.0)
 end
 
+"""
+    iterative_solver(_f, Xi, alg::DIIS_extrapolation_alg = DIIS_extrapolation_alg())
+
+Solves an iterative problem using DIIS extrapolation.
+
+# Arguments
+- `_f`: Function to be iterated
+- `Xi`: Initial guess
+- `alg`: DIIS algorithm parameters
+"""
 function iterative_solver(_f, Xi, alg::DIIS_extrapolation_alg = DIIS_extrapolation_alg())
     M, ΔM, tol, max_diis_step, damping_factor = alg.M, alg.ΔM, alg.tol, alg.max_diis_step, alg.damping_factor
 
@@ -43,6 +75,22 @@ function iterative_solver(_f, Xi, alg::DIIS_extrapolation_alg = DIIS_extrapolati
     return Xj
 end
 
+"""
+    iteration_step!(_f, subspace_xjs::AbstractVector, subspace_errs::AbstractVector, Xj, diis_step::Int, tol::Float64; init_err::Float64 = 0.0)
+
+Performs a single iteration step in the DIIS procedure.
+
+# Arguments
+- `_f`: Function to be iterated
+- `subspace_xjs`: Vector of previous solutions
+- `subspace_errs`: Vector of previous errors
+- `Xj`: Current solution
+- `diis_step`: Current DIIS step number
+- `tol`: Convergence tolerance
+- `init_err`: Initial error for relative convergence check
+
+Returns a tuple of (new solution, convergence status).
+"""
 function iteration_step!(_f, subspace_xjs::AbstractVector, subspace_errs::AbstractVector, Xj, diis_step::Int, tol::Float64; init_err::Float64 = 0.0)
         push!(subspace_xjs, Xj)
         (diis_step > 0) && popfirst!(subspace_xjs)
@@ -63,10 +111,27 @@ function iteration_step!(_f, subspace_xjs::AbstractVector, subspace_errs::Abstra
         return Xj, is_converged
 end
 
+"""
+    real_inner(x::AbstractVector, y::AbstractVector)
+
+Computes the real part of the inner product between two vectors.
+"""
 function real_inner(x::AbstractVector, y::AbstractVector)
     return real(VectorInterface.inner(x, y))
 end
 
+"""
+    initialize_ovlpmat(subspace_errs::AbstractVector; damping_factor::Float64=0.0, inner=real_inner)
+
+Initializes the overlap matrix for DIIS extrapolation.
+
+# Arguments
+- `subspace_errs`: Vector of error vectors
+- `damping_factor`: Factor to stabilize the diagonal elements
+- `inner`: Function to compute inner products
+
+Returns the initialized overlap matrix with an additional row/column for the constraint.
+"""
 function initialize_ovlpmat(subspace_errs::AbstractVector; damping_factor::Float64=0.0, inner=real_inner)
     M = length(subspace_errs)
     B = zeros(ComplexF64, (M+1, M+1))
@@ -81,6 +146,18 @@ function initialize_ovlpmat(subspace_errs::AbstractVector; damping_factor::Float
     return B
 end
 
+"""
+    update_ovlpmat!(B::Matrix{<:Number}, ΔM::Int, subspace_errs::AbstractVector; damping_factor::Float64=0.0, inner=real_inner)
+
+Updates the overlap matrix in-place after new error vectors are added.
+
+# Arguments
+- `B`: Existing overlap matrix to update
+- `ΔM`: Number of new vectors added
+- `subspace_errs`: Vector of error vectors
+- `damping_factor`: Factor to stabilize the diagonal elements
+- `inner`: Function to compute inner products
+"""
 function update_ovlpmat!(B::Matrix{<:Number}, ΔM::Int, subspace_errs::AbstractVector; damping_factor::Float64=0.0, inner=real_inner)
     M = size(B)[1] - 1
     B[1:M-ΔM, 1:M-ΔM] .= B[ΔM+1:end-1, ΔM+1:end-1]
@@ -94,6 +171,17 @@ function update_ovlpmat!(B::Matrix{<:Number}, ΔM::Int, subspace_errs::AbstractV
     return B
 end
 
+"""
+    DIIS_extrapolation(B::Matrix{<:Number}, subspace_xjs::AbstractVector)
+
+Performs DIIS extrapolation to generate an improved solution.
+
+# Arguments
+- `B`: Overlap matrix including constraint row/column
+- `subspace_xjs`: Vector of previous solutions
+
+Returns the extrapolated solution.
+"""
 function DIIS_extrapolation(B::Matrix{<:Number}, subspace_xjs::AbstractVector)
     M = size(B)[1] - 1
 

@@ -15,8 +15,10 @@ export MPSMPSTransferMatrix, MPSMPOMPSTransferMatrix
 export ACMap, fixed_point
 export right_env, left_env
 export gauge_fixing, overall_u1_phase
-export DIIS_extrapolation_alg, power_method_alg, iterative_solver
 export mps_update, vumps_update, vumps
+
+# DIIS tools for speeding up iterative solvers
+export DIIS_extrapolation_alg, power_method_alg, iterative_solver
 
 include("utils.jl");
 include("transfer_matrix.jl");
@@ -25,7 +27,9 @@ include("MPSMPOMPSTransferMatrix.jl");
 include("ACMap.jl");
 include("canonicalization.jl");
 include("gauge_fixing.jl"); 
-include("diis.jl")
 include("vumps.jl");
+
+# DIIS tools for speeding up iterative solvers
+include("DIISTools/diis.jl")
 
 end
