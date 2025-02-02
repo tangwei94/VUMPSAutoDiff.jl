@@ -70,3 +70,11 @@ function left_canonical_QR(A::TensorMap{T, ComplexSpace, 2, 1}; tol::Float64=1e-
     (verbosity >= 1) && println("left_canonical_QR: final convergence: δ = $δ")
     return AL, R
 end
+
+function full_canonicalization(A::MPSTensor)
+    AL, R = left_canonical_QR(A)
+    AR, L = right_canonical_QR(A)
+    C = R * L;
+    AC = AL * C;
+    return AL, AR, AC, C
+end
