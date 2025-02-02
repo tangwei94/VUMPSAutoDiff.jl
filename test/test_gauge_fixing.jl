@@ -6,7 +6,8 @@
 
     @tensor AL1[-1 -2; -3] := AL[1 -2; 2] * U'[-1; 1] * U[2; -3]
     
-    U1 = gauge_fixing(AL, AL1)
+    U1, conv_meas = gauge_fixing(AL, AL1)
+    @test conv_meas < 1e-9
     λ = overall_u1_phase(U, U1)
 
     @test norm(U - U1 * λ) < 1e-9
