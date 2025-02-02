@@ -1,59 +1,72 @@
-function right_canonical_QR(A::MPSTensor; tol::Float64=1e-15, maxiter=200, enable_warning=false)
-
-    L, Q = rightorth(permute(A, ((1, ), (2, 3))))
-    AR = permute(Q, ((1, 2), (3, )))
-    L = L / norm(L)
-    δ = norm(L - id(domain(L)[1])) 
-    L0 = L
-
-    ix= 0
-    while δ > tol && ix < maxiter
-        if ix >= maxiter ÷ 10 && ix % 10 == 0 
-            lop = MPSMPSTransferMatrix(A, AR)
-            L = right_env(lop)' # TODO. tol = max(tol, δ/10)
-        end
-
-        L, Q = rightorth(permute(A * L, ((1, ), (2, 3))))
-        AR = permute(Q, ((1, 2), (3, )))
-        L = L / norm(L)
-
-        δ = norm(L-L0)
-        L0 = L
-
-        ix += 1
-    end
-    
-    enable_warning && δ > tol && @warn "right_canonical_QR failed to converge. δ: $δ , tol: $tol"
-
-    return AR, L0 # originally here we return L0'. don't remember why.
+function right_canonical_QR_operation!(L::MPSBondTensor, AR::MPSTensor, A::MPSTensor)
+    L1, Q = rightorth(A * L, ((1, ), (2, 3)))
+    permute!(AR, Q, ((1, 2), (3, )))
+    rmul!(L1, 1/norm(L1))
+    α = overall_u1_phase(L, L1)
+    δ = norm(L - L1 * α)
+    copy!(L, L1)
+    return δ
 end
 
-function left_canonical_QR(A::TensorMap{T, ComplexSpace, 2, 1}; tol::Float64=1e-15, maxiter=200, enable_warning=false) where T
+function right_canonical_QR(A::MPSTensor; tol::Float64=1e-12, maxiter::Int=200, verbosity::Int=0)
 
-    AL, R = leftorth(A)
-    R = R / norm(R)
-    δ = norm(R - id(domain(R)[1])) 
-    R0 = R
+    #lop = MPSMPSTransferMatrix(A, A)
+    #ρR = right_env(lop)
+    #U, S, _ = tsvd(ρR)
+    #L = U * sqrt(S)
 
-    ix = 0
-    while δ > tol && ix < maxiter
-        if ix >= maxiter ÷ 10 && ix % 10 == 0 
-            lop = MPSMPSTransferMatrix(A, AL) # TODO. tol = max(tol, δ/10)
-            R = left_env(lop)
+    L = id(ComplexF64, space(A, 1)) / dim(space(A, 1))
+    AR = similar(A, space(A))
+    δ = right_canonical_QR_operation!(L, AR, A)
+
+    for ix in 1:maxiter
+        if ix % 10 == 0 
+            lop = MPSMPSTransferMatrix(A, AR)
+            copy!(L, right_env(lop)') # TODO. tol = max(tol, δ/10)
         end
-
-        @tensor A_tmp[-1, -2; -3] := R[-1, 1] * A[1, -2, -3]
-        AL, R = leftorth(A_tmp) 
-        R = R / norm(R)
-
-        δ = norm(R - R0)
-        R0 = R
-
-        ix += 1
+        δ = right_canonical_QR_operation!(L, AR, A)
+        (verbosity >= 2) && println("right_canonical_QR: step $ix: δ = $δ")
+        (δ < tol) && break 
     end
 
-    #println(ix, " iterations")
-    enable_warning && δ > tol && @warn "left_canonical_QR failed to converge. δ: $δ , tol: $tol"
+    (verbosity >= 1) && println("right_canonical_QR: final convergence: δ = $δ")
 
-    return AL, R0
+    return AR, L # originally here we return L0'. don't remember why.
+end
+
+function left_canonical_QR_operation!(R::MPSBondTensor, AL::MPSTensor, A::MPSTensor)
+    @tensor AL[-1 -2; -3] = R[-1; 1] * A[1 -2; -3]
+    Q, R1 = leftorth!(AL)
+    copy!(AL, Q)
+    rmul!(R1, 1/norm(R1))
+    α = overall_u1_phase(R, R1)
+    δ = norm(R - R1 * α)
+    copy!(R, R1)
+
+    return δ
+end
+
+function left_canonical_QR(A::TensorMap{T, ComplexSpace, 2, 1}; tol::Float64=1e-12, maxiter::Int=200, verbosity::Int=0) where T
+
+    #lop = MPSMPSTransferMatrix(A, A)
+    #ρL = left_env(lop)
+    #_, S, V = tsvd(ρL)
+    #R = sqrt(S) * V
+    
+    R = id(ComplexF64, space(A, 1)) / dim(space(A, 1))
+    AL = similar(A, space(A))
+    δ = left_canonical_QR_operation!(R, AL, A)
+
+    for ix in 1:maxiter
+        if ix % 10 == 0 
+            lop = MPSMPSTransferMatrix(A, AL) # TODO. tol = max(tol, δ/10)
+            copy!(R, left_env(lop)')
+        end
+        δ = left_canonical_QR_operation!(R, AL, A)
+        (verbosity >= 2) && println("left_canonical_QR: step $ix: δ = $δ")
+        (δ < tol) && break 
+    end
+
+    (verbosity >= 1) && println("left_canonical_QR: final convergence: δ = $δ")
+    return AL, R
 end
