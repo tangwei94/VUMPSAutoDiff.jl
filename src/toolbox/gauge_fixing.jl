@@ -126,7 +126,7 @@ function gauge_fixed_vumps_iteration(AL::MPSTensor, AR::MPSTensor, T::MPOTensor)
     AC1, C1 = vumps_update(AL, AR, T)
     AL1, AR1, _ = mps_update(AC1, C1)
 
-    U = gauge_fixing(AL, AL1)
+    U, _ = gauge_fixing(AL, AL1)
     @tensor AR1_gauged[-1 -2; -3] := AR1[1 -2; 2] * U[-1; 1] * U'[2; -3]
     @tensor AL1_gauged[-1 -2; -3] := AL1[1 -2; 2] * U[-1; 1] * U'[2; -3]
 
