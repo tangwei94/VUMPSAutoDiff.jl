@@ -18,6 +18,7 @@ export gauge_fixing, overall_u1_phase
 export mps_update!, mps_update, vumps_update, vumps
 
 export vomps!, VOMPSOptions
+export mpo_power_iterations, MPOPowerIterationOptions
 
 export DIIS_extrapolation_alg, power_method_alg, iterative_solver
 
@@ -39,5 +40,6 @@ include("toolbox/gauge_fixing.jl");
 
 # VOMPS
 include("vomps/vomps.jl");
+include("vomps/power_iteration.jl");
 
 end

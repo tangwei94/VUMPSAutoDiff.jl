@@ -90,14 +90,16 @@ function vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR:
     EL = left_env(MPSMPOMPSTransferMatrix(AL1, T, AL))
     ER = right_env(MPSMPOMPSTransferMatrix(AR1, T, AR))
     conv_meas = Inf
+    num_iter = 0
     for ix in 1:opts.maxiter
         vomps_update!(AC1, C1, AL1, AR1, EL, ER, T, AL, AR, AC, C)
+        num_iter += 1
         conv_meas = mps_update!(AL1, AR1, AC1, C1)
-        if conv_meas < opts.tol
-            break
-        end
         if opts.verbosity > 1
             printstyled("VOMPS iteration $ix: conv_meas = $conv_meas\n", color=:green)
+        end
+        if conv_meas < opts.tol
+            break
         end
     end
     (opts.verbosity == 1) && printstyled("VOMPS final convergence measure: $conv_meas\n", color=:green)
@@ -108,7 +110,7 @@ function vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR:
         power_method_conv = NaN
     end
 
-    return AL1, AR1, AC1, C1, power_method_conv
+    return AL1, AR1, AC1, C1, power_method_conv, num_iter
 end
 @non_differentiable vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor, opts::VOMPSOptions)
 
