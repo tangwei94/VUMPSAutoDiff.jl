@@ -5,6 +5,14 @@ const MPSTensor = AbstractTensorMap{T,S,2,1} where {T,S}
 const MPSBondTensor = AbstractTensorMap{T,S,1,1} where {T,S}
 const MPOTensor = AbstractTensorMap{T,S,2,2} where {T,S}
 
+# PEPS Tensor: physical space * auxiliary space <- virtual space^4. Only support PEPS on the square lattice for now.
+const PEPSTensor = AbstractTensorMap{T,S,2,4} where {T,S}
+const PEPSBondTensor = AbstractTensorMap{T,S,1,1} where {T,S}
+
+const OnSiteTerm = AbstractTensorMap{T,S,1,1} where {T,S}
+const BondTermLeft = AbstractTensorMap{T,S,1,2} where {T,S}
+const BondTermRight = AbstractTensorMap{T,S,2,1} where {T,S}
+
 # copied from MPSKit.jl
 function fill_data!(a::TensorMap, dfun)
     for (k, v) in blocks(a)
