@@ -40,7 +40,6 @@ struct LinearMapBackward
     VRs::Vector{<:AbstractTensorMap}
 end
 
-
 Base.:+(bTM1::LinearMapBackward, bTM2::LinearMapBackward) = LinearMapBackward([bTM1.VLs; bTM2.VLs], [bTM1.VRs; bTM2.VRs])
 Base.:-(bTM1::LinearMapBackward, bTM2::LinearMapBackward) = LinearMapBackward([bTM1.VLs; bTM2.VLs], [bTM1.VRs; -1*bTM2.VRs])
 Base.:*(a::Number, bTM::LinearMapBackward) = LinearMapBackward(bTM.VLs, a * bTM.VRs)
