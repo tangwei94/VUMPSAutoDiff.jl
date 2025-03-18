@@ -38,6 +38,24 @@ function mps_update(AC::MPSTensor, C::MPSBondTensor)
     return AL, AR, conv_meas
 end
 
+function vumps_update!(AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor, T::MPOTensor)
+    TM_L = MPSMPOMPSTransferMatrix(AL, T, AL)
+    TM_R = MPSMPOMPSTransferMatrix(AR, T, AR)
+
+    EL = left_env(TM_L)
+    ER = right_env(TM_R)
+
+    # AC map
+    AC_map = ACMap(EL, T, ER)
+    left_env!(AC, AC_map)
+
+    # C map
+    C_map = MPSMPSTransferMatrix(EL', ER)
+    left_env!(C, C_map)
+    
+    return AC, C
+end
+
 function vumps_update(AL::MPSTensor, AR::MPSTensor, T::MPOTensor)
 
     TM_L = MPSMPOMPSTransferMatrix(AL, T, AL)

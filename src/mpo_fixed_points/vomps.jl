@@ -1,3 +1,5 @@
+# TODO. wrap AC, C, AL, AR, T, EL, ER into a single struct. (which turns out to be a duplicate of what MPSKit.jl is doing....  )
+
 """
     VOMPSOptions
 
@@ -49,8 +51,9 @@ function vomps_update!(AC1::MPSTensor, C1::MPSBondTensor, AL1::MPSTensor, AR1::M
     λ = right_env!(ER, TM_R)
 
     # update AC and C
-    @tensor AC1[-1 -2; -3] = (1/λ) * EL[-1; 1 2] * AC[1 3; 4] * T[2 -2; 3 5] * ER[4 5; -3]
-    @tensor C1[-1; -2] = EL[-1; 1 3] * C[1; 2] * ER[2 3; -2]
+    α = norm(C) # if we don't add this, norm(AC) and norm(C) may decrease to zero during power iteration. adding this does not affect the final result, but makes the calculation more stable.
+    @tensor AC1[-1 -2; -3] = (1/α) * (1/λ) * EL[-1; 1 2] * AC[1 3; 4] * T[2 -2; 3 5] * ER[4 5; -3]
+    @tensor C1[-1; -2] = (1/α) * EL[-1; 1 3] * C[1; 2] * ER[2 3; -2]
 
     return AC1, C1
 end
@@ -107,7 +110,7 @@ function vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR:
     if opts.do_gauge_fixing
         power_method_conv = gauge_fix!(AL1, AR1, AC1, C1, AL)
     else
-        power_method_conv = NaN
+        power_method_conv = abs(1 - mps_fidelity(AL1, AL))
     end
 
     return AL1, AR1, AC1, C1, power_method_conv, num_iter

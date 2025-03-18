@@ -19,6 +19,7 @@ export mps_update!, mps_update, vumps_update, vumps
 
 export vomps!, VOMPSOptions
 export mpo_power_iterations, MPOPowerIterationOptions
+export vumps_vomps_combo_iterations, VOMPSVUMPSComboOptions
 
 export DIIS_extrapolation_alg, power_method_alg, iterative_solver
 
@@ -31,15 +32,16 @@ include("linearmaps/MPSMPOMPSTransferMatrix.jl");
 include("linearmaps/ACMap.jl");
 
 include("canonicalization.jl");
-include("vumps.jl");
 
 # DIIS tools for speeding up iterative solvers
 include("toolbox/diis.jl")
 # gauge fixing
 include("toolbox/gauge_fixing.jl"); 
+include("toolbox/mps_fidelity.jl");
 
-# VOMPS
-include("vomps/vomps.jl");
-include("vomps/power_iteration.jl");
-
+# MPO fixed points
+include("mpo_fixed_points/vomps.jl");
+include("mpo_fixed_points/power_iteration.jl");
+include("mpo_fixed_points/vumps.jl");
+include("mpo_fixed_points/vomps_vumps_combo.jl");
 end
