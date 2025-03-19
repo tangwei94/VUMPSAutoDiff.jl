@@ -78,3 +78,12 @@ function full_canonicalization(A::MPSTensor)
     AC = AL * C;
     return AL, AR, AC, C
 end
+
+function full_canonicalization!(AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor)
+    # AL should already be left-canonical
+    AR1, C1 = right_canonical_QR(AL)
+    copy!(AR, AR1)
+    copy!(C, C1)
+    copy!(AC, AL * C)
+    return AL, AR, AC, C
+end

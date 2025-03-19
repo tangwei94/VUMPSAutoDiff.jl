@@ -99,7 +99,7 @@ function vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR:
         num_iter += 1
         conv_meas = mps_update!(AL1, AR1, AC1, C1)
         if opts.verbosity > 1
-            printstyled("VOMPS iteration $ix: conv_meas = $conv_meas\n", color=:green)
+            printstyled("VOMPS iteration $ix: conv_meas = $conv_meas\r", color=:green)
         end
         if conv_meas < opts.tol
             break
@@ -110,6 +110,8 @@ function vomps!(AL1::MPSTensor, AR1::MPSTensor, T::MPOTensor, AL::MPSTensor, AR:
     if opts.do_gauge_fixing
         power_method_conv = gauge_fix!(AL1, AR1, AC1, C1, AL)
     else
+        # this does not work as well as the convergence measure from `gauge_fixing!`. 
+        # This one is also more expensive.
         power_method_conv = abs(1 - mps_fidelity(AL1, AL))
     end
 

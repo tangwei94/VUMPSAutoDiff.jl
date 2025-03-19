@@ -10,5 +10,5 @@ function mps_fidelity(AL1::MPSTensor, AL2::MPSTensor)
     TM22 = MPSMPSTransferMatrix(AL2, AL2)
     λ22 = left_env!(tmpEL, TM22)
     
-    return abs(λ12)^2 / (abs(λ11) * abs(λ22))
+    return sqrt(abs(λ12)^2 / (abs(λ11) * abs(λ22)))
 end

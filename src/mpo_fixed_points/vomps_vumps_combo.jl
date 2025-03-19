@@ -5,7 +5,7 @@ struct VOMPSVUMPSComboOptions
     maxiter::Int
 end
 
-function VOMPSVUMPSComboOptions(; M::Int = 10, VUMPS_criterion::Float64 = 1e-6, tol::Float64 = 1e-9, maxiter::Int = 100)
+function VOMPSVUMPSComboOptions(; M::Int = 3, VUMPS_criterion::Float64 = 1e-6, tol::Float64 = 1e-9, maxiter::Int = 100)
     return VOMPSVUMPSComboOptions(M, VUMPS_criterion, tol, maxiter)
 end
 
@@ -13,9 +13,10 @@ function vumps_vomps_combo_iterations(T::MPOTensor, AL::MPSTensor, AR::MPSTensor
 
     total_num_iter = 0
     power_method_conv = Inf
-    while power_method_conv > options.VUMPS_criterion
+    vumps_conv = Inf
+    while power_method_conv > options.VUMPS_criterion && total_num_iter < 1e4
         AL1, AR1 = deepcopy(AL), deepcopy(AR)
-        AL1, AR1, AC1, C1, power_method_conv, num_iter = vomps!(AL1, AR1, T, AL, AR, AC, C, VOMPSOptions(maxiter=250, tol=1e-12, verbosity=1, do_gauge_fixing=false));
+        AL1, AR1, AC1, C1, power_method_conv, num_iter = vomps!(AL1, AR1, T, AL, AR, AC, C, VOMPSOptions(maxiter=250, tol=1e-12, verbosity=1, do_gauge_fixing=true));
         AL, AR, AC, C = AL1, AR1, AC1, C1
 
         total_num_iter += num_iter
@@ -35,12 +36,13 @@ function vumps_vomps_combo_iterations(T::MPOTensor, AL::MPSTensor, AR::MPSTensor
         end
         vumps_update!(AL, AR, AC, C, T)
         vumps_conv = mps_update!(AL, AR, AC, C)
-        (options.M > 0) && (AL, AR, AC, C = full_canonicalization(AL))
+        (options.M > 0) && (full_canonicalization!(AL, AR, AC, C))
+        total_num_iter += 1
         println("-- $ix, VUMPS convergence: $vumps_conv")
         if vumps_conv < options.tol
             break
         end
     end
 
-    return AL, AR, AC, C
+    return AL, AR, AC, C, vumps_conv, total_num_iter
 end

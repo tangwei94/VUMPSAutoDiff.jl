@@ -71,5 +71,5 @@ function mpo_power_iterations(T::MPOTensor, AL::MPSTensor, AR::MPSTensor, AC::MP
             update_ovlpmat!(B, options.ΔM, subspace_errs; damping_factor=options.damping_factor, inner=TensorKit.inner)
         end
     end
-    return (AL, AR, AC, C)
+    return AL, AR, AC, C, power_method_conv, total_num_iter
 end
