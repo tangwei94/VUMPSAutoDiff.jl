@@ -15,6 +15,8 @@
 end
 
 @testset "VOMPS+VUMPS" for ix in 1:3
+    T = tensor_square_ising(asinh(1) / 2)
+    B = rand(ComplexF64, ℂ^8*ℂ^2, ℂ^8)
     # VOMPS+VUMPS
     options = VOMPSVUMPSComboOptions(; M=3, VUMPS_criterion=1e-4, tol=1e-9, maxiter=100)
     BL, BR, BC, C = VUMPSAutoDiff.full_canonicalization(B)
