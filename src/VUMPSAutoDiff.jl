@@ -20,6 +20,7 @@ export mps_update!, mps_update, vumps_update, vumps
 export vomps!, VOMPSOptions
 export mpo_power_iterations, MPOPowerIterationOptions
 export vumps_vomps_combo_iterations, VOMPSVUMPSComboOptions
+export two_site_variation, changebonds!
 
 export DIIS_extrapolation_alg, power_method_alg, iterative_solver
 
@@ -44,4 +45,5 @@ include("mpo_fixed_points/vomps.jl");
 include("mpo_fixed_points/power_iteration.jl");
 include("mpo_fixed_points/vumps.jl");
 include("mpo_fixed_points/vomps_vumps_combo.jl");
+include("mpo_fixed_points/expansion.jl");
 end

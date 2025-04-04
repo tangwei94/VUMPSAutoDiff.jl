@@ -23,6 +23,21 @@ function fill_data!(a::TensorMap, dfun)
 end
 randomize!(a::TensorMap) = fill_data!(a, randn)
 
+# copied from https://github.com/QuantumKitHub/MPSKit.jl/blob/d30ef9e97dec9375b43574c9877820e8922574f0/src/utility/utility.jl#L20-L21
+_firstspace(t::AbstractTensorMap) = space(t, 1)
+_lastspace(t::AbstractTensorMap) = space(t, numind(t))
+
+
+# copied from MPSKit.jl: https://github.com/QuantumKitHub/MPSKit.jl/blob/d30ef9e97dec9375b43574c9877820e8922574f0/src/utility/utility.jl#L1-L6
+function _transpose_front(t::AbstractTensorMap) # make TensorMap{S,N₁+N₂-1,1}
+    return repartition(t, numind(t) - 1, 1)
+end
+function _transpose_tail(t::AbstractTensorMap) # make TensorMap{S,1,N₁+N₂-1}
+    return repartition(t, 1, numind(t) - 1)
+end
+
+
+
 #VectorInterface.scalartype(x::ZeroTangent) = Float64
 
 #TensorKitChainRulesCoreExt = Base.get_extension(TensorKit, :TensorKitChainRulesCoreExt)
