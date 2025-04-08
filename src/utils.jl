@@ -27,7 +27,6 @@ randomize!(a::TensorMap) = fill_data!(a, randn)
 _firstspace(t::AbstractTensorMap) = space(t, 1)
 _lastspace(t::AbstractTensorMap) = space(t, numind(t))
 
-
 # copied from MPSKit.jl: https://github.com/QuantumKitHub/MPSKit.jl/blob/d30ef9e97dec9375b43574c9877820e8922574f0/src/utility/utility.jl#L1-L6
 function _transpose_front(t::AbstractTensorMap) # make TensorMap{S,N₁+N₂-1,1}
     return repartition(t, numind(t) - 1, 1)
