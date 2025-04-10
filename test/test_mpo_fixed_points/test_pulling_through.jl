@@ -1,10 +1,5 @@
 # some tests for pulling through condition. 
 
-# temporary
-left_canonical_QR = VUMPSAutoDiff.left_canonical_QR
-right_canonical_QR = VUMPSAutoDiff.right_canonical_QR
-mps_fidelity = VUMPSAutoDiff.mps_fidelity
-
 @testset "Pulling through condition" for ix  in 1:5
     function check_pulling_through(T, χ, d)
         δ = permute(isomorphism((ℂ^d), (ℂ^d)'), ((2, 1), ()))
