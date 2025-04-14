@@ -14,7 +14,13 @@ export AbstractLinearMap, LinearMapBackward, left_transfer, right_transfer
 export MPSMPSTransferMatrix, MPSMPOMPSTransferMatrix
 export ACMap, fixed_point
 export right_env, left_env
+
+export left_canonical_QR, right_canonical_QR, full_canonicalization, full_canonicalization!
+
 export gauge_fixing, overall_u1_phase
+
+export mps_fidelity
+
 export mps_update!, mps_update, vumps_update, vumps
 
 export vomps!, VOMPSOptions

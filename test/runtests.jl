@@ -2,9 +2,9 @@ include("test_prerequisites.jl");
 include("test_linearmaps/test_mpsmps_transfer_matrix.jl");
 include("test_linearmaps/test_mpsmpomps_transfer_matrix.jl");
 include("test_linearmaps/test_ACMap.jl");
+include("test_mpo_fixed_points/test_pulling_through.jl");
 include("test_gauge_fixing.jl");
 include("test_vumps.jl");
-include("test_mpo_fixed_points/test_pulling_through.jl");
 
 @testset "Aqua" verbose = true begin
     using Aqua

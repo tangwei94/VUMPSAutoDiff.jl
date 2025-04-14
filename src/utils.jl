@@ -35,8 +35,6 @@ function _transpose_tail(t::AbstractTensorMap) # make TensorMap{S,1,N₁+N₂-1}
     return repartition(t, 1, numind(t) - 1)
 end
 
-
-
 #VectorInterface.scalartype(x::ZeroTangent) = Float64
 
 #TensorKitChainRulesCoreExt = Base.get_extension(TensorKit, :TensorKitChainRulesCoreExt)
