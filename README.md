@@ -14,8 +14,7 @@ This package mainly handles the following task:
 
 Given a matrix product operator (MPO) represented by a `MPOTensor` `T`, the VUMPS algorithm looks for its fixed point matrix product state (MPS), which will be represented by a `MPSTensor` `A`.
 The MPO usually comes from a partition function of a classical statistical model or the overlap of two projected entangled pair states (PEPS).
-In the forward computation, the final quantity of interest will be a function of `A`.
-
 This package provides an implementation of the backward rule for the VUMPS algorithm, which is compatible with [Zygote.jl](https://github.com/FluxML/Zygote.jl), hence the name `VUMPSAutoDiff`.
+More specifically, suppose in the forward computation, the final quantity of interest `y` will be a function of `A`, and suppose the derivative dy / dA is known, this package allows one to compute dy / dT using backward differentiation.
 
-
+A minimal example of using this package is provided in `example.jl`, which computes the gradient of the free energy of Ising model with respect to the inverse temperature. 
