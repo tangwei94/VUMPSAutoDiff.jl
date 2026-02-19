@@ -110,12 +110,12 @@ Backward pass computation for right environment calculation. Solves the linear s
 function right_env_backward(TM::AbstractLinearMap, λ::Number, vr::AbstractTensorMap, ∂vr::AbstractTensorMap)
     init = similar(vr)
     randomize!(init); 
-    init = init - dot(vr, init) * vr # the subtracted part lives in the null space of flip(TM) - λ*I
+    init = init - dot(vr, init) * vr / dot(vr, vr) # the subtracted part lives in the null space of flip(TM) - λ*I
     
     err = norm(dot(vr, ∂vr))
     tol = 1e-9 * max(1, norm(∂vr))
     (err > tol) && @warn "right_env_backward: forward computation not gauge invariant: final computation should not depend on the phase of vr. err=$err, tol=$tol" 
-    ∂vr = ∂vr - dot(vr, ∂vr) * vr 
+    ∂vr = ∂vr - dot(vr, ∂vr) * vr / dot(vr, vr)
     ξr, info = linsolve(x -> left_transfer(TM, x) - λ*x, ∂vr', init') # ξr should live in the space of vl
     (info.converged == 0) && @warn "right_env_backward not converged: normres = $(info.normres)"
     
@@ -140,12 +140,12 @@ Backward pass computation for left environment calculation. Solves the linear sy
 function left_env_backward(TM::AbstractLinearMap, λ::Number, vl::AbstractTensorMap, ∂vl::AbstractTensorMap)
     init = similar(vl); 
     randomize!(init); 
-    init = init - dot(vl, init) * vl # the subtracted part lives in the null space of TM - λ*I
+    init = init - dot(vl, init) * vl / dot(vl, vl) # the subtracted part lives in the null space of TM - λ*I
 
     err = norm(dot(vl, ∂vl))
     tol = 1e-9 * max(1, norm(∂vl))
     (err > tol) && @warn "left_env_backward: forward computation not gauge invariant: final computation should not depend on the phase of vl. err=$err, tol=$tol" 
-    ∂vl = ∂vl - dot(vl, ∂vl) * vl 
+    ∂vl = ∂vl - dot(vl, ∂vl) * vl / dot(vl, vl)
     ξl, info = linsolve(x -> right_transfer(TM, x) - λ*x, ∂vl', init') # ξl should live in the space of vr
     (info.converged == 0) && @warn "left_env_backward not converged: normres = $(info.normres)"
 
