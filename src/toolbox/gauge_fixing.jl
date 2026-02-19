@@ -15,7 +15,7 @@ their transfer matrix. Returns the unitary transformation and convergence metric
 function gauge_fixing(AL1::AbstractTensorMap, AL2::AbstractTensorMap)
     TM = MPSMPSTransferMatrix(AL1, AL2)
     σ = left_env(TM)
-    U, R = leftorth(σ; alg=QRpos())
+    U, R = left_orth(σ; alg = qrpos())
 
     rmul!(R, dim(space(R, 1))/tr(R))  # Normalize R matrix
     conv_meas = norm(R - id(space(R, 1)))  # Measures deviation from identity

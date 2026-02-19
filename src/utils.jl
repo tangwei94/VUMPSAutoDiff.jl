@@ -23,6 +23,10 @@ function fill_data!(a::TensorMap, dfun)
 end
 randomize!(a::TensorMap) = fill_data!(a, randn)
 
+# Factorization helpers (TensorKit 0.16+ moved QRpos/LQpos to MatrixAlgebraKit)
+qrpos() = MatrixAlgebraKit.LAPACK_HouseholderQR(; positive=true)
+lqpos() = MatrixAlgebraKit.LAPACK_HouseholderLQ(; positive=true)
+
 # copied from https://github.com/QuantumKitHub/MPSKit.jl/blob/d30ef9e97dec9375b43574c9877820e8922574f0/src/utility/utility.jl#L20-L21
 _firstspace(t::AbstractTensorMap) = space(t, 1)
 _lastspace(t::AbstractTensorMap) = space(t, numind(t))

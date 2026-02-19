@@ -1,4 +1,5 @@
 using Test
+using Random
 using TensorKit, TensorOperations, KrylovKit
 using ChainRules, ChainRulesCore, Zygote
 

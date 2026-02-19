@@ -1,8 +1,8 @@
 @testset "test gauge_fixing" for _ in 1:10
     A = rand(ComplexF64, ℂ^6*ℂ^2, ℂ^6)
-    AL, _ = leftorth(A)
+    AL, _ = left_orth(A)
     M = rand(ComplexF64, ℂ^6, ℂ^6)
-    U, _ = leftorth(M)
+    U, _ = left_orth(M)
 
     @tensor AL1[-1 -2; -3] := AL[1 -2; 2] * U'[-1; 1] * U[2; -3]
     

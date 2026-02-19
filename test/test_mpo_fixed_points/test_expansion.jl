@@ -33,7 +33,7 @@
         @show space(AL), err
         if err > tol
             # use the information in B2 to increase the bond dimension
-            AL, AR, C, AC = changebonds!(AL, AR, C, B2, truncerr(tol));
+            AL, AR, C, AC = changebonds!(AL, AR, C, B2, truncerror(tol));
             AL, AR, AC, C, vumps_conv0, total_num_iter0 = vumps_vomps_combo_iterations(T, AL, AR, AC, C, options);
             total_number_of_iterations = total_num_iter0
         else

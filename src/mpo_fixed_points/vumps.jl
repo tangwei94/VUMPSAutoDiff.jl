@@ -1,11 +1,11 @@
 function mps_update!(AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor)
     # Left orthogonalization
-    UAC_l, PAC_l = leftorth(AC; alg = QRpos())
-    UC_l, PC_l = leftorth(C; alg = QRpos())
+    UAC_l, PAC_l = left_orth(AC; alg = qrpos())
+    UC_l, PC_l = left_orth(C; alg = qrpos())
 
     # Right orthogonalization 
-    PAC_r, UAC_r = rightorth(permute(AC, ((1,), (2, 3))); alg = LQpos())
-    PC_r, UC_r = rightorth(C; alg=LQpos())
+    PAC_r, UAC_r = right_orth(permute(AC, ((1,), (2, 3))); alg = lqpos())
+    PC_r, UC_r = right_orth(C; alg = lqpos())
 
     # Update AL and AR in-place
     mul!(AL, UAC_l, UC_l')  # Reuse AL's memory
@@ -18,11 +18,11 @@ end
 @non_differentiable mps_update!(AL::MPSTensor, AR::MPSTensor, AC::MPSTensor, C::MPSBondTensor)
 
 function mps_update(AC::MPSTensor, C::MPSBondTensor)
-    UAC_l, PAC_l = leftorth(AC; alg = QRpos())
-    UC_l, PC_l = leftorth(C; alg = QRpos())
+    UAC_l, PAC_l = left_orth(AC; alg = qrpos())
+    UC_l, PC_l = left_orth(C; alg = qrpos())
 
-    PAC_r, UAC_r = rightorth(permute(AC, ((1,), (2, 3))); alg = LQpos())
-    PC_r, UC_r = rightorth(C; alg=LQpos())
+    PAC_r, UAC_r = right_orth(permute(AC, ((1,), (2, 3))); alg = lqpos())
+    PC_r, UC_r = right_orth(C; alg = lqpos())
 
     AL = UAC_l * UC_l'
     AR = permute(UC_r' * UAC_r, ((1, 2), (3,)))
@@ -288,4 +288,3 @@ function ChainRulesCore.rrule(::typeof(vumps), T::MPOTensor; maxiter=250, tol=1e
     end
     return (AL, AR), vumps_pushback_arnoldi
 end
-

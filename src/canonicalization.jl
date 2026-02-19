@@ -1,5 +1,5 @@
 function right_canonical_QR_operation!(L::MPSBondTensor, AR::MPSTensor, A::MPSTensor)
-    L1, Q = rightorth(A * L, ((1, ), (2, 3)))
+    L1, Q = right_orth(permute(A * L, ((1, ), (2, 3))))
     permute!(AR, Q, ((1, 2), (3, )))
     rmul!(L1, 1/norm(L1))
     α = overall_u1_phase(L, L1)
@@ -36,7 +36,7 @@ end
 
 function left_canonical_QR_operation!(R::MPSBondTensor, AL::MPSTensor, A::MPSTensor)
     @tensor AL[-1 -2; -3] = R[-1; 1] * A[1 -2; -3]
-    Q, R1 = leftorth!(AL)
+    Q, R1 = left_orth!(AL)
     copy!(AL, Q)
     rmul!(R1, 1/norm(R1))
     α = overall_u1_phase(R, R1)

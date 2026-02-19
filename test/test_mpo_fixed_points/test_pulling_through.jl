@@ -1,6 +1,7 @@
 # some tests for pulling through condition. 
 
 @testset "Pulling through condition" for ix  in 1:5
+    Random.seed!(0xC0FFEE + ix)
     function check_pulling_through(T, χ, d)
         δ = permute(isomorphism((ℂ^d), (ℂ^d)'), ((2, 1), ()))
         A = rand(ComplexF64, ℂ^χ*ℂ^d, ℂ^χ)
@@ -79,5 +80,4 @@
     @test check2
     @test check3
 end
-
 

@@ -4,7 +4,7 @@ __precompile__(true)
 
 # Write your package code here.
 using LinearAlgebra, VectorInterface
-using TensorKit, TensorOperations, KrylovKit, TensorKitManifolds
+using MatrixAlgebraKit, TensorKit, TensorOperations, KrylovKit, TensorKitManifolds
 using ChainRules, ChainRulesCore, Zygote
 using OptimKit
 using JLD2

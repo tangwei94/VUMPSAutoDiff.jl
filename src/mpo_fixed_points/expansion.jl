@@ -10,7 +10,7 @@ function two_site_variation(AL::MPSTensor, AR::MPSTensor, C::MPSBondTensor, EL::
     return B2
 end
 
-function changebonds!(AL::MPSTensor, AR::MPSTensor, C::MPSBondTensor, B2::MPSBondTensor, trscheme::TruncationScheme)
+function changebonds!(AL::MPSTensor, AR::MPSTensor, C::MPSBondTensor, B2::MPSBondTensor, trscheme::MatrixAlgebraKit.TruncationStrategy)
 
     U, _, V = tsvd!(B2; trunc = trscheme)
     NL = leftnull(AL)
