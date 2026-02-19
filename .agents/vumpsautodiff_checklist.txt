@@ -1,0 +1,20 @@
+VUMPSAutoDiff Checklist (findings from HofstadterIPEPS integration)
+
+Correctness
+- modified_VUMPS rrule only returns tangents for T; ψ/ϕ/unit get NoTangent. Ensure this is intended for all callers.
+- Backward solve in vumps_pushback_geometric_series uses DIIS without convergence checks; failures can yield silent bad gradients.
+- Gauge fixing and phase alignment (gauge_fixing/overall_u1_phase) are non-smooth at degeneracies; gradients can be unstable.
+
+Performance
+- project_dAL deepcopies dAL before projection (expensive inside AD loops).
+- modified_vumps_update recomputes left_env/right_env each iteration with no reuse or warm-start.
+- Debug prints inside rrules (printstyled/@show) add overhead and noise in hot paths.
+
+API/Design
+- AD boundary in modified_VUMPS is implicit; consider documenting that gradients only propagate through T.
+- Lack of explicit tolerance/stop criteria reporting for DIIS-based backward solve makes debugging difficult.
+
+Suggested Next Checks
+- Add convergence status return from DIIS/iterative_solver and handle failures explicitly.
+- Provide in-place projection (avoid deepcopy) or a cached workspace for project_dAL.
+- Add optional verbosity flag to suppress rrule prints.
