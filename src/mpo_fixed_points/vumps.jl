@@ -97,40 +97,51 @@ function vumps(T::MPOTensor; A::MPSTensor, maxiter=500, tol=1e-12, verbosity=1)
     return AL, AR
 end
 
+function project_dAL!(dAL::TensorMap, AL::AbstractTensorMap, manifold::Symbol)
+    if manifold == :Grassmann
+        TensorKitManifolds.Grassmann.project!(dAL, AL)
+        return dAL
+    elseif manifold == :Stiefel
+        TensorKitManifolds.Stiefel.project!(dAL, AL)
+        return dAL
+    else
+        error("manifold not supported")
+    end
+end
+project_dAL!(dAL::Union{ZeroTangent, NoTangent}, ::AbstractTensorMap, ::Symbol) = dAL
+
+function project_dAR!(dAR::TensorMap, AR::AbstractTensorMap, manifold::Symbol)
+    if manifold == :Grassmann
+        AR_adjoint = permute(AR, ((1, ), (2, 3)))'
+        dAR_adjoint = permute(dAR, ((1, ), (2, 3)))'
+        TensorKitManifolds.Grassmann.project!(dAR_adjoint, AR_adjoint)
+        permute!(dAR, dAR_adjoint', ((1, 2), (3, )))
+        return dAR
+    elseif manifold == :Stiefel
+        AR_adjoint = permute(AR, ((1, ), (2, 3)))'
+        dAR_adjoint = permute(dAR, ((1, ), (2, 3)))'
+        TensorKitManifolds.Stiefel.project!(dAR_adjoint, AR_adjoint)
+        permute!(dAR, dAR_adjoint', ((1, 2), (3, )))
+        return dAR
+    else
+        error("manifold not supported")
+    end
+end
+project_dAR!(dAR::Union{ZeroTangent, NoTangent}, ::AbstractTensorMap, ::Symbol) = dAR
+
 function project_dAL(dAL, AL::AbstractTensorMap, manifold::Symbol)
     if !(dAL isa TensorMap)
         return dAL
     end
-   
-    dAL_copy = deepcopy(dAL)
-    if manifold == :Grassmann
-        TensorKitManifolds.Grassmann.project!(dAL_copy, AL)
-        return dAL_copy
-    elseif manifold == :Stiefel
-        TensorKitManifolds.Stiefel.project!(dAL_copy, AL)
-        return dAL_copy
-    else
-        error("manifold not supported")
-    end
+    out = deepcopy(dAL)
+    return project_dAL!(out, AL, manifold)
 end
 function project_dAR(dAR, AR::AbstractTensorMap, manifold::Symbol)
     if !(dAR isa TensorMap)
         return dAR
     end
-
-    if manifold == :Grassmann
-        AR_adjoint = permute(AR, ((1, ), (2, 3)))'
-        dAR_adjoint = permute(dAR, ((1, ), (2, 3)))'
-        TensorKitManifolds.Grassmann.project!(dAR_adjoint, AR_adjoint)
-        return permute(dAR_adjoint', ((1, 2), (3, )))
-    elseif manifold == :Stiefel
-        AR_adjoint = permute(AR, ((1, ), (2, 3)))'
-        dAR_adjoint = permute(dAR, ((1, ), (2, 3)))'
-        TensorKitManifolds.Stiefel.project!(dAR_adjoint, AR_adjoint)
-        return permute(dAR_adjoint', ((1, 2), (3, )))
-    else
-        error("manifold not supported")
-    end
+    out = deepcopy(dAR)
+    return project_dAR!(out, AR, manifold)
 end
 
 # https://github.com/QuantumKitHub/PEPSKit.jl/blob/a6afe158c3cb375c75b2f119a2481882bafe866e/src/algorithms/peps_opt.jl#L116-L173
@@ -141,18 +152,27 @@ function ChainRulesCore.rrule(::typeof(vumps), T::MPOTensor; maxiter=250, tol=1e
         (_∂AL, _∂AR) = _∂ALAR
         ∂AL, ∂AR = unthunk(_∂AL), unthunk(_∂AR)
 
-        ∂AL = project_dAL(∂AL, AL, :Grassmann)
-        ∂AR = project_dAR(∂AR, AR, :Grassmann)
+        bufAL = similar(AL)
+        bufAR = similar(AR)
+
+        if ∂AL isa TensorMap
+            copy!(bufAL, ∂AL)
+            ∂AL = project_dAL!(bufAL, AL, :Grassmann)
+        end
+        if ∂AR isa TensorMap
+            copy!(bufAR, ∂AR)
+            ∂AR = project_dAR!(bufAR, AR, :Grassmann)
+        end
         _, vumps_iteration_vjp = pullback(ordinary_vumps_iteration, AL, AR, T)
 
         function vjp_ALAR_ALAR(X)
-            Xi1 = project_dAL(X[1], AL, :Grassmann)
-            Xi2 = project_dAR(X[2], AR, :Grassmann)
+            Xi1 = (X[1] isa TensorMap) ? (copy!(bufAL, X[1]); project_dAL!(bufAL, AL, :Grassmann)) : X[1]
+            Xi2 = (X[2] isa TensorMap) ? (copy!(bufAR, X[2]); project_dAR!(bufAR, AR, :Grassmann)) : X[2]
 
             Xo = vumps_iteration_vjp((Xi1, Xi2))
 
-            Xo1 = project_dAL(Xo[1], AL, :Grassmann)
-            Xo2 = project_dAR(Xo[2], AR, :Grassmann)
+            Xo1 = (Xo[1] isa TensorMap) ? (copy!(bufAL, Xo[1]); project_dAL!(bufAL, AL, :Grassmann)) : Xo[1]
+            Xo2 = (Xo[2] isa TensorMap) ? (copy!(bufAR, Xo[2]); project_dAR!(bufAR, AR, :Grassmann)) : Xo[2]
 
             return [Xo1, Xo2]
         end
@@ -180,8 +200,17 @@ function ChainRulesCore.rrule(::typeof(vumps), T::MPOTensor; maxiter=250, tol=1e
         (_∂AL, _∂AR) = _∂ALAR
         ∂AL, ∂AR = unthunk(_∂AL), unthunk(_∂AR)
 
-        ∂AL = project_dAL(∂AL, AL, :Stiefel)
-        ∂AR = project_dAR(∂AR, AR, :Stiefel)
+        bufAL = similar(AL)
+        bufAR = similar(AR)
+
+        if ∂AL isa TensorMap
+            copy!(bufAL, ∂AL)
+            ∂AL = project_dAL!(bufAL, AL, :Stiefel)
+        end
+        if ∂AR isa TensorMap
+            copy!(bufAR, ∂AR)
+            ∂AR = project_dAR!(bufAR, AR, :Stiefel)
+        end
 
         #FIXME. temperory fix. originally it would fail if ∂AL or ∂AR is ZeroTangent. 
         # since the ad rule for tensoroperations does not accept ZeroTangent.
@@ -192,13 +221,13 @@ function ChainRulesCore.rrule(::typeof(vumps), T::MPOTensor; maxiter=250, tol=1e
         _, vumps_iteration_vjp = pullback(gauge_fixed_vumps_iteration, AL, AR, T)
 
         function vjp_ALAR_ALAR(X)
-            Xi1 = project_dAL(X[1], AL, :Stiefel)
-            Xi2 = project_dAR(X[2], AR, :Stiefel)
+            Xi1 = (X[1] isa TensorMap) ? (copy!(bufAL, X[1]); project_dAL!(bufAL, AL, :Stiefel)) : X[1]
+            Xi2 = (X[2] isa TensorMap) ? (copy!(bufAR, X[2]); project_dAR!(bufAR, AR, :Stiefel)) : X[2]
 
             Xo = vumps_iteration_vjp((Xi1, Xi2))
 
-            Xo1 = project_dAL(Xo[1], AL, :Stiefel)
-            Xo2 = project_dAR(Xo[2], AR, :Stiefel)
+            Xo1 = (Xo[1] isa TensorMap) ? (copy!(bufAL, Xo[1]); project_dAL!(bufAL, AL, :Stiefel)) : Xo[1]
+            Xo2 = (Xo[2] isa TensorMap) ? (copy!(bufAR, Xo[2]); project_dAR!(bufAR, AR, :Stiefel)) : Xo[2]
 
             return [Xo1, Xo2]
         end
@@ -258,18 +287,27 @@ function ChainRulesCore.rrule(::typeof(vumps), T::MPOTensor; maxiter=250, tol=1e
         (_∂AL, _∂AR) = _∂ALAR
         ∂AL, ∂AR = unthunk(_∂AL), unthunk(_∂AR)
 
-        ∂AL = project_dAL(∂AL, AL, :Stiefel)
-        ∂AR = project_dAR(∂AR, AR, :Stiefel)
+        bufAL = similar(AL)
+        bufAR = similar(AR)
+
+        if ∂AL isa TensorMap
+            copy!(bufAL, ∂AL)
+            ∂AL = project_dAL!(bufAL, AL, :Stiefel)
+        end
+        if ∂AR isa TensorMap
+            copy!(bufAR, ∂AR)
+            ∂AR = project_dAR!(bufAR, AR, :Stiefel)
+        end
 
         _, vumps_iteration_vjp = pullback(gauge_fixed_vumps_iteration, AL, AR, T)
         function vjp_ALAR_ALAR(X)
-            Xi1 = project_dAL(X[1], AL, :Stiefel)
-            Xi2 = project_dAR(X[2], AR, :Stiefel)
+            Xi1 = (X[1] isa TensorMap) ? (copy!(bufAL, X[1]); project_dAL!(bufAL, AL, :Stiefel)) : X[1]
+            Xi2 = (X[2] isa TensorMap) ? (copy!(bufAR, X[2]); project_dAR!(bufAR, AR, :Stiefel)) : X[2]
 
             Xo = vumps_iteration_vjp((Xi1, Xi2))
 
-            Xo1 = project_dAL(Xo[1], AL, :Stiefel)
-            Xo2 = project_dAR(Xo[2], AR, :Stiefel)
+            Xo1 = (Xo[1] isa TensorMap) ? (copy!(bufAL, Xo[1]); project_dAL!(bufAL, AL, :Stiefel)) : Xo[1]
+            Xo2 = (Xo[2] isa TensorMap) ? (copy!(bufAR, Xo[2]); project_dAR!(bufAR, AR, :Stiefel)) : Xo[2]
 
             return [Xo1, Xo2]
         end
