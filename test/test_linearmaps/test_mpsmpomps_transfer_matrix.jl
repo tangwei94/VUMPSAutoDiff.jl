@@ -34,12 +34,13 @@ end
 @testset "test backward for left_env" for ix in 1:10
     sp1 = ℂ^12;
     sp2 = ℂ^3;
+    sp3 = ℂ^4;
 
     A = rand(ComplexF64, sp1*sp2, sp1);
     B = rand(ComplexF64, sp1*sp2, sp1);
-    M = rand(ComplexF64, sp2*sp2, sp2*sp2);
+    M = rand(ComplexF64, sp3*sp2, sp2*sp3);
 
-    Q = rand(ComplexF64, sp1*sp2, sp1)
+    Q = rand(ComplexF64, sp1*sp3, sp1)
 
     function _F1(X)
         TM1 = MPSMPOMPSTransferMatrix(X, M, X)
@@ -68,15 +69,16 @@ end
     spa = ℂ^12;
     spb = ℂ^8;
     sp2 = ℂ^3;
+    sp3 = ℂ^4;
 
     A = rand(ComplexF64, spa*sp2, spa);
     A1 = rand(ComplexF64, spa*sp2, spa);
     B = rand(ComplexF64, spb*sp2, spb);
     B1 = rand(ComplexF64, spb*sp2, spb);
-    M = rand(ComplexF64, sp2*sp2, sp2*sp2);
+    M = rand(ComplexF64, sp3*sp2, sp2*sp3);
 
-    Qr = rand(ComplexF64, spa, spb*sp2)
-    Ql = rand(ComplexF64, spb*sp2, spa)
+    Qr = rand(ComplexF64, spa, spb*sp3)
+    Ql = rand(ComplexF64, spb*sp3, spa)
 
     function _F1(X)
         TM1 = MPSMPOMPSTransferMatrix(A, X, B)
