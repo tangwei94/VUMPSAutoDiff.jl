@@ -6,16 +6,10 @@ struct MPSMPOMPSTransferMatrix{A<:MPSTensor,B<:MPOTensor,C<:MPSTensor} <:
 end
 
 function right_space(TM::MPSMPOMPSTransferMatrix)
-    space_above = domain(TM.above)[1]
-    space_below = domain(TM.below)[1]
-    space_middle = domain(TM.middle)[1]
-    return space_below*space_middle←space_above
+    return space(TM.below, 1) * space(TM.middle, 1) ← space(TM.above, 1)
 end
 function left_space(TM::MPSMPOMPSTransferMatrix)
-    space_above = domain(TM.above)[1]
-    space_below = domain(TM.below)[1]
-    space_middle = domain(TM.middle)[1]
-    return space_above←space_below*space_middle
+    return space(TM.above, 1) ← space(TM.below, 1) * space(TM.middle, 1)
 end
 
 function left_transfer(TM::MPSMPOMPSTransferMatrix, v::AbstractTensorMap)

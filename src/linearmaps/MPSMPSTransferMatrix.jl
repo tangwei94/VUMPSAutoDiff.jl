@@ -5,14 +5,10 @@ struct MPSMPSTransferMatrix{A<:MPSTensor,C<:MPSTensor} <:
 end
 
 function right_space(TM::MPSMPSTransferMatrix)
-    space_above = domain(TM.above)[1]
-    space_below = domain(TM.below)[1]
-    return space_below←space_above
+    return space(TM.below, 1)←space(TM.above, 1)
 end
 function left_space(TM::MPSMPSTransferMatrix)
-    space_above = domain(TM.above)[1]
-    space_below = domain(TM.below)[1]
-    return space_above←space_below
+    return space(TM.above, 1)←space(TM.below, 1)
 end
 
 function left_transfer(TM::MPSMPSTransferMatrix, v::AbstractTensorMap)
