@@ -1,6 +1,6 @@
 using Test
 using TensorKit, TensorOperations, KrylovKit
-using ChainRules, ChainRulesCore, Zygote
+using ChainRulesCore, Zygote
 
 using Revise
 using VUMPSAutoDiff
