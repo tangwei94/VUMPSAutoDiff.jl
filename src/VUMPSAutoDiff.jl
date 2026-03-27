@@ -5,9 +5,7 @@ __precompile__(true)
 # Write your package code here.
 using LinearAlgebra, VectorInterface
 using TensorKit, TensorOperations, KrylovKit, TensorKitManifolds
-using ChainRules, ChainRulesCore, Zygote
-using OptimKit
-using JLD2
+using ChainRulesCore, Zygote
 
 export randomize!
 export AbstractLinearMap, LinearMapBackward, left_transfer, right_transfer 
