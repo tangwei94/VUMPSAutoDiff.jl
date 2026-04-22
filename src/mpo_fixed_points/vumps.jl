@@ -77,7 +77,7 @@ end
 
 function vumps(T::MPOTensor; A::MPSTensor, maxiter=500, tol=1e-12, verbosity=1)
     AL, AR, AC, C = ignore_derivatives() do
-        sp = domain(A)[1]
+        sp = space(A, 1)
         C = rand(ComplexF64, sp, sp)
         AL, _ = left_canonical_QR(A)
         AR, _ = right_canonical_QR(A)
