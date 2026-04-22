@@ -5,9 +5,9 @@ struct ACMap{TypeL<:EnvTensorL, TypeT<:MPOTensor, TypeR<:EnvTensorR} <:AbstractL
 end
 
 function left_space(TM::ACMap)
-    space_vL = domain(TM.EL)[1]
-    space_ph = domain(TM.T)[2]
-    space_vR = domain(TM.ER)[1]
+    space_vL = space(TM.EL, 1)
+    space_ph = space(TM.T, 2)
+    space_vR = space(TM.ER, 1)
 
     return space_vL*space_ph←space_vR
 end

@@ -46,7 +46,7 @@ function left_canonical_QR_operation!(R::MPSBondTensor, AL::MPSTensor, A::MPSTen
     return δ
 end
 
-function left_canonical_QR(A::TensorMap{T, ComplexSpace, 2, 1}; tol::Float64=1e-12, maxiter::Int=200, verbosity::Int=0) where T
+function left_canonical_QR(A::MPSTensor; tol::Float64=1e-12, maxiter::Int=200, verbosity::Int=0)
 
     #lop = MPSMPSTransferMatrix(A, A)
     #ρL = left_env(lop)

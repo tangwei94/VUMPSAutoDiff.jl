@@ -2,6 +2,7 @@
 *.jl.cov
 *.jl.mem
 .vscode
+.codex
 /docs/Manifest.toml
 /docs/build/
 /docs/plans/
